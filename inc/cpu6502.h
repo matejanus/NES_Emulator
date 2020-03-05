@@ -68,7 +68,7 @@ public:
     uint16_t pc;
     uint8_t st;
 
-    enum class flags{
+    enum flags{
         C = (1 << 0), // carry
         Z = (1 << 1), // zero
         I = (1 << 2), // disable interrupt
@@ -83,8 +83,8 @@ private:
     void write(uint16_t addr, uint8_t data);
     uint8_t read(uint16_t addr, bool bReadOnly = false);
 
-    uint8_t getFlag(flags f, bool v);
-    void setFlag(flags f);
+    uint8_t getFlag(flags f);
+    void setFlag(flags f, bool v);
 
     struct INSTRUCTION{
         std::string name;

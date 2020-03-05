@@ -41,3 +41,74 @@ void cpu6502::write(uint16_t addr, uint8_t data) {
 uint8_t cpu6502::read(uint16_t addr, bool bReadOnly) {
     return bus->read(addr, bReadOnly);
 }
+
+void cpu6502::clock() {
+
+    if (cycles == 0) {
+        opcode = read(pc);
+        pc++;
+
+        cycles = lookup[opcode].cycles;
+
+        uint8_t additionalCicle1 = (this->*lookup[opcode].addrmode)();
+        uint8_t additionalCicle2 = (this->*lookup[opcode].opperate)();
+        cycles += (additionalCicle1 && additionalCicle2);
+    }
+    cycles--;
+}
+
+
+void cpu6502::setFlag(cpu6502::flags f, bool v)
+{
+
+    if(v)
+        st |= f;
+    else
+        st &= ~f;
+}
+
+uint8_t cpu6502::IMP() {
+    fetched = acc;
+    return 0;
+}
+
+uint8_t cpu6502::IMM()
+{
+    addr_abs = pc++;
+    return 0;
+}
+
+uint8_t cpu6502::ZP0()
+{
+    addr_abs = read(pc);
+    pc++;
+    addr_abs &= 0x00FF;
+    return 0;
+}
+
+uint8_t cpu6502::ZPX()
+{
+    addr_abs = (read(pc) + x);
+    pc++;
+    addr_abs &= 0x00FF;
+    return 0;
+}
+
+uint8_t cpu6502::ZPY()
+{
+    addr_abs = (read(pc) + y);
+    pc++;
+    addr_abs &= 0x00FF;
+    return 0;
+}
+
+uint8_t cpu6502::ABS()
+{
+    uint16_t lo = read(pc);
+    pc++;
+    uint16_t hi = read(pc);
+    pc++;
+    addr_abs = ((hi << 8) | lo);
+
+    return 0;
+}
