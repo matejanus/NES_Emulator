@@ -92,6 +92,6 @@ private:
         uint8_t (cpu6502::*addrmode)(void) = nullptr;
         uint8_t cycles = 0;
     };
-    //TODO: refactor to use std::array
-    std::vector<INSTRUCTION> lookup;
+    std::array<INSTRUCTION, 256> lookup;
+
 };
