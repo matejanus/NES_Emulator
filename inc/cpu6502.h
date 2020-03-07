@@ -5,7 +5,7 @@
 
 #include <cstdint>
 #include <vector>
-
+#include "cpu6502.h"
 class Bus;
 
 class cpu6502{

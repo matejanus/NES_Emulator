@@ -60,11 +60,14 @@ void cpu6502::clock() {
 
 void cpu6502::setFlag(cpu6502::flags f, bool v)
 {
-
     if(v)
         st |= f;
     else
         st &= ~f;
+}
+
+uint8_t cpu6502::getFlag(cpu6502::flags f) {
+    return ((st & f) > 0) ? 1 : 0;
 }
 
 uint8_t cpu6502::IMP() {
@@ -111,4 +114,248 @@ uint8_t cpu6502::ABS()
     addr_abs = ((hi << 8) | lo);
 
     return 0;
+}
+
+uint8_t cpu6502::ABX()
+{
+    uint16_t lo = read(pc);
+    pc++;
+    uint16_t hi = read(pc);
+    pc++;
+    addr_abs = ((hi << 8) | lo);
+    addr_abs += x;
+
+    if ((addr_abs & 0xFF00) != (hi << 8))
+        return 1;
+    else
+        return 0;
+}
+
+uint8_t cpu6502::IND()
+{
+    uint16_t ptr_lo = read(pc);
+    pc++;
+    uint16_t ptr_hi = read(pc);
+    pc++;
+
+    uint16_t  ptr = ((ptr_hi << 8) | ptr_lo);
+    if (ptr_lo == 0x00FF) //simulate hardware bug
+    {
+        addr_abs += (read(0xFF00) << 8)| read(ptr);
+    }
+    else{ //noral baheaviour
+        addr_abs += (read(ptr + 1) << 8)| read(ptr);
+    }
+    return 0;
+}
+
+uint8_t cpu6502::IZX()
+{
+    uint16_t t = read(pc);
+    pc++;
+
+    uint16_t lo = read(static_cast<uint16_t>(t + static_cast<uint16_t>(x)) & 0x00FF);
+    uint16_t hi = read(static_cast<uint16_t>(t + static_cast<uint16_t>(x) + 1) & 0x00FF);
+
+    addr_abs = (hi << 8) | lo;
+
+    return 0;
+}
+
+uint8_t cpu6502::IZY()
+{
+    uint16_t t = read(pc);
+    pc++;
+
+    uint16_t lo = read(t & 0x00FF);
+    uint16_t hi = read((t + 1) & 0x00FF);
+
+    addr_abs = (hi << 8) | lo;
+    addr_abs += y;
+
+    if ((addr_abs & 0xFF00) != (hi << 8))
+        return 1;
+    else
+        return 0;
+}
+
+uint8_t cpu6502::REL()
+{
+    addr_rel = read(pc);
+    pc++;
+
+    if (addr_rel & 0x80)
+        addr_rel |= 0xFF00;
+    return 0;
+}
+
+uint8_t  cpu6502::fetch() {
+    if (lookup[opcode].addrmode != &cpu6502::IMP)
+        fetched = read(addr_abs);
+    return fetched;
+}
+
+uint8_t cpu6502::AND() {
+
+    fetch();
+    acc = acc & fetched;
+    setFlag(Z, acc == 0x00);
+    setFlag(N, acc & 0x80); // negative number
+    return 1;
+}
+
+uint8_t cpu6502::BCS(){
+
+    if (getFlag(C))
+    {
+        cycles++;
+        addr_abs = pc + addr_rel;
+
+        if ((addr_abs & 0xFF00) != (pc & 0xFF00))
+            cycles++;
+        pc = addr_abs;
+    }
+    return 0;
+}
+
+uint8_t cpu6502::BCC(){
+
+    if (!getFlag(C))
+    {
+        cycles++;
+        addr_abs = pc + addr_rel;
+
+        if ((addr_abs & 0xFF00) != (pc & 0xFF00))
+            cycles++;
+        pc = addr_abs;
+    }
+    return 0;
+}
+
+uint8_t cpu6502::BEQ(){
+
+    if (getFlag(Z))
+    {
+        cycles++;
+        addr_abs = pc + addr_rel;
+
+        if ((addr_abs & 0xFF00) != (pc & 0xFF00))
+            cycles++;
+        pc = addr_abs;
+    }
+    return 0;
+}
+
+uint8_t cpu6502::BMI(){
+
+    if (getFlag(N))
+    {
+        cycles++;
+        addr_abs = pc + addr_rel;
+
+        if ((addr_abs & 0xFF00) != (pc & 0xFF00))
+            cycles++;
+        pc = addr_abs;
+    }
+    return 0;
+}
+
+uint8_t cpu6502::BNE(){
+
+    if (!getFlag(Z))
+    {
+        cycles++;
+        addr_abs = pc + addr_rel;
+
+        if ((addr_abs & 0xFF00) != (pc & 0xFF00))
+            cycles++;
+        pc = addr_abs;
+    }
+    return 0;
+}
+
+uint8_t cpu6502::BPL(){
+
+    if (!getFlag(N))
+    {
+        cycles++;
+        addr_abs = pc + addr_rel;
+
+        if ((addr_abs & 0xFF00) != (pc & 0xFF00))
+            cycles++;
+        pc = addr_abs;
+    }
+    return 0;
+}
+
+uint8_t cpu6502::BVC(){
+
+    if (!getFlag(V))
+    {
+        cycles++;
+        addr_abs = pc + addr_rel;
+
+        if ((addr_abs & 0xFF00) != (pc & 0xFF00))
+            cycles++;
+        pc = addr_abs;
+    }
+    return 0;
+}
+
+uint8_t cpu6502::BVS(){
+
+    if (getFlag(V))
+    {
+        cycles++;
+        addr_abs = pc + addr_rel;
+
+        if ((addr_abs & 0xFF00) != (pc & 0xFF00))
+            cycles++;
+        pc = addr_abs;
+    }
+    return 0;
+}
+
+uint8_t cpu6502::CLC(){
+    setFlag(C, false);
+    return 0;
+}
+
+uint8_t cpu6502::CLD(){
+    setFlag(D, false);
+    return 0;
+}
+
+uint8_t cpu6502::CLI(){
+    setFlag(I, false);
+    return 0;
+}
+uint8_t cpu6502::CLV(){
+    setFlag(V, false);
+    return 0;
+}
+
+uint8_t cpu6502::ADC(){
+    fetch();
+    uint16_t temp = static_cast<uint16_t>(acc) + static_cast<uint16_t>(fetched) + static_cast<uint16_t>(getFlag(C));
+    setFlag(C, temp > 255);
+    setFlag(Z, (temp & 0x00FF) == 0);
+    setFlag(N, temp & 0x80);
+    setFlag(V, (~(static_cast<uint16_t>(acc) ^ static_cast<uint16_t>(fetched)) & (static_cast<uint16_t>(acc) ^ static_cast<uint16_t>(temp))) & 0x0080);
+    acc = temp & 0x00FF;
+    return 1;
+}
+
+
+uint8_t cpu6502::SBC(){
+    fetch();
+    uint16_t value = static_cast<uint16_t>(fetched) ^ 0x00FF;
+
+    uint16_t temp = static_cast<uint16_t>(acc) + value + static_cast<uint16_t>(getFlag(C));
+    setFlag(C, temp > 255);
+    setFlag(Z, (temp & 0x00FF) == 0);
+    setFlag(N, temp & 0x80);
+    setFlag(V, (((temp ^ static_cast<uint16_t>(acc)) & (temp ^ value)) & 0x0080));
+    acc = temp & 0x00FF;
+    return 1;
 }
