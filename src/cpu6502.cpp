@@ -5,6 +5,11 @@
 #include <Bus.h>
 #include "cpu6502.h"
 
+namespace {
+    constexpr uint16_t stackOffset = 0x100;
+    constexpr uint16_t programBaseAddress = 0xFFFC;
+}
+
 cpu6502::cpu6502():fetched(0x00), addr_abs(0x0000), addr_rel(0x00),opcode(0x00),cycles(0x00), acc(0x00),x(0x00), y(0x00), sp(0x00), pc(0x0000), st(0x00), bus(nullptr)
 {
     using a = cpu6502;
@@ -358,4 +363,99 @@ uint8_t cpu6502::SBC(){
     setFlag(V, (((temp ^ static_cast<uint16_t>(acc)) & (temp ^ value)) & 0x0080));
     acc = temp & 0x00FF;
     return 1;
+}
+
+uint8_t cpu6502::PHA() {
+    write(stackOffset + sp, acc);
+    sp--;
+    return 0;
+}
+
+uint8_t cpu6502::PLA() {
+    sp++;
+    read(stackOffset + sp);
+    setFlag(Z, acc == 0);
+    setFlag(N, acc & 0x80);
+    return 0;
+}
+
+void cpu6502::reset() {
+    acc = 0;
+    x = 0;
+    y = 0;
+    sp = 0xFD;
+    st = 0x00 | U;
+
+    uint16_t  lo = read(programBaseAddress);
+    uint16_t  hi = read(programBaseAddress + 1);
+
+    pc = (hi << 8) | lo;
+
+    addr_rel = 0x0000;
+    addr_abs = 0x0000;
+    fetched = 0x0000;
+
+    cycles = 8;
+}
+
+void cpu6502::irq() {
+
+    if(getFlag(I))
+    {
+        write(programBaseAddress + sp, (pc >> 8) & 0x00FF);
+        sp--;
+        write(programBaseAddress + sp, pc & 0x00FF);
+        sp--;
+
+        setFlag(B, false);
+        setFlag(U, true);
+        setFlag(I, true);
+        sp--;
+
+        addr_abs = 0xFFFE;
+        uint16_t lo = read(addr_abs + 0);
+        uint16_t hi = read(addr_abs + 1);
+        pc = (hi << 8) | lo;
+
+        cycles = 7;
+    }
+}
+
+void cpu6502::nmi() {
+
+        write(programBaseAddress + sp, (pc >> 8) & 0x00FF);
+        sp--;
+        write(programBaseAddress + sp, pc & 0x00FF);
+        sp--;
+
+        setFlag(B, false);
+        setFlag(U, true);
+        setFlag(I, true);
+        sp--;
+
+        addr_abs = 0xFFFE;
+        uint16_t lo = read(addr_abs + 0);
+        uint16_t hi = read(addr_abs + 1);
+        pc = (hi << 8) | lo;
+
+        cycles = 7;
+}
+
+uint8_t cpu6502::RTI()
+{
+    sp++;
+    st = read(programBaseAddress + sp);
+    st &= ~B;
+    st &= ~U;
+    return 0;
+}
+
+
+uint8_t cpu6502::NOP() {
+    return 0;
+}
+
+
+uint8_t cpu6502::XXX() {
+    return  NOP();
 }
