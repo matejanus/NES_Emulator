@@ -5,6 +5,7 @@
 
 #include <cstdint>
 #include <vector>
+#include <map>
 #include "cpu6502.h"
 class Bus;
 
@@ -48,16 +49,20 @@ public:
 
     uint8_t XXX(); //illegal opcode
 
+
+    bool complete();
     void clock();
     void reset();
     void irq();
     void nmi();
 
+    std::map<uint16_t, std::string> disassemble(uint16_t nStart, uint16_t nStop);
+
     uint8_t fetch();
     uint8_t fetched;
 
     uint16_t addr_abs;
-    uint8_t addr_rel;
+    uint16_t addr_rel;
     uint8_t opcode;
     uint8_t cycles;
 
