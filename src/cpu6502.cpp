@@ -51,6 +51,10 @@ void cpu6502::clock() {
 
     if (cycles == 0) {
         opcode = read(pc);
+
+    #ifdef LOGMODE
+        uint16_t log_pc = pc;
+    #endif
         pc++;
 
         cycles = lookup[opcode].cycles;
@@ -58,7 +62,24 @@ void cpu6502::clock() {
         uint8_t additionalCicle1 = (this->*lookup[opcode].addrmode)();
         uint8_t additionalCicle2 = (this->*lookup[opcode].opperate)();
         cycles += (additionalCicle1 && additionalCicle2);
+        setFlag(U, true);
+
+        #ifdef LOGMODE
+                // This logger dumps every cycle the entire processor state for analysis.
+                // This can be used for debugging the emulation, but has little utility
+                // during emulation. Its also very slow, so only use if you have to.
+                if (logfile == nullptr)	logfile = fopen("6502.txt", "wt");
+                if (logfile != nullptr)
+                {
+                    fprintf(logfile, "%10d:%02d PC:%04X %s A:%02X X:%02X Y:%02X %s%s%s%s%s%s%s%s STKP:%02X\n",
+                        clock_count, 0, log_pc, "XXX", acc, x, y,
+                        getFlag(N) ? "N" : ".",	getFlag(V) ? "V" : ".",	getFlag(U) ? "U" : ".",
+                        getFlag(B) ? "B" : ".",	getFlag(D) ? "D" : ".",	getFlag(I) ? "I" : ".",
+                        getFlag(Z) ? "Z" : ".",	getFlag(C) ? "C" : ".",	sp);
+                }
+        #endif
     }
+    clock_count++;
     cycles--;
 }
 

@@ -7,6 +7,13 @@
 #include <vector>
 #include <map>
 #include "cpu6502.h"
+
+//#define LOGMODE // <- Uncomment me to enable logging!
+
+#ifdef LOGMODE
+#include <stdio.h>
+#endif
+
 class Bus;
 
 class cpu6502{
@@ -73,6 +80,8 @@ public:
     uint16_t pc;
     uint8_t st;
 
+    uint32_t clock_count = 0;
+
     enum flags{
         C = (1 << 0), // carry
         Z = (1 << 1), // zero
@@ -98,5 +107,10 @@ private:
         uint8_t cycles = 0;
     };
     std::array<INSTRUCTION, 256> lookup;
+
+#ifdef LOGMODE
+    private:
+	FILE* logfile = nullptr;
+#endif
 
 };
