@@ -7,6 +7,7 @@ Ppu::Ppu() = default;
 Ppu::~Ppu() = default;
 
 uint8_t Ppu::cpuRead(uint16_t addr, bool rdonly) {
+    (void)rdonly;
     uint8_t data = 0x00;
 
     switch(addr) {
@@ -33,6 +34,7 @@ uint8_t Ppu::cpuRead(uint16_t addr, bool rdonly) {
     return data;
 }
 void Ppu::cpuWrite(uint16_t addr, uint8_t data) {
+    (void)data;
     switch(addr) {
     case 0x0000:  //Control
         break;
@@ -55,9 +57,29 @@ void Ppu::cpuWrite(uint16_t addr, uint8_t data) {
     }
 }
 uint8_t Ppu::ppuRead(uint16_t addr, bool rdonly) {
+    (void)rdonly;
     uint8_t data = 0x00;
     addr &= 0x3FFF;
+
+    if(cart->ppuRead(addr, data))
+    {
+
+    }
+
     return data;  //mock
 }
 void Ppu::ppuWrite(uint16_t addr, uint8_t data) {
+    (void)data;
+    addr &= 0x3FFF;
+
+    if(cart->ppuWrite(addr, data))
+    {
+
+    }
+
+}
+void Ppu::connectCartridge(const std::shared_ptr<Cartridge>& cartridge) {
+    this->cart = cartridge;
+}
+void Ppu::clock() {
 }

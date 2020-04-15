@@ -184,6 +184,7 @@ public:
     }
 
     bool OnUserUpdate(float fElapsedTime) {
+        (void)fElapsedTime;
         Clear(olc::DARK_BLUE);
 
         if(GetKey(olc::Key::SPACE).bPressed) {
