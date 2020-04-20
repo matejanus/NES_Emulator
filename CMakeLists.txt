@@ -14,7 +14,8 @@ set(sources
         ${CMAKE_SOURCE_DIR}/src/cpu6502.cpp
         ${CMAKE_SOURCE_DIR}/src/Cartridge.cpp
         ${CMAKE_SOURCE_DIR}/src/Ppu.cpp
-        ${CMAKE_SOURCE_DIR}/src/Mapper.cpp)
+        ${CMAKE_SOURCE_DIR}/src/Mapper.cpp
+        ${CMAKE_SOURCE_DIR}/src/Mapper_000.cpp)
 
 include_directories(inc)
 add_executable(NES_emulator ${sources})
