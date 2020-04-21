@@ -1158,14 +1158,14 @@ namespace olc
 		size_t c = 0; std::string o;
 		for (auto s : data)	o += std::string(1, s ^ key[(c++) % key.size()]);
 		return o;
-	};
+	}
 
 	std::string ResourcePack::makeposix(const std::string& path)
 	{
 		std::string o;
 		for (auto s : path) o += std::string(1, s == '\\' ? '/' : s);
 		return o;
-	};
+	}
 
 	//==========================================================
 
@@ -2466,7 +2466,7 @@ namespace olc
 #endif
 
 	// Need a couple of statics as these are singleton instances
-	// read from multiple locations
+	// cpuRead from multiple locations
 	std::atomic<bool> PixelGameEngine::bAtomActive{ false };
 	std::map<size_t, uint8_t> PixelGameEngine::mapKeys;
 	olc::PixelGameEngine* olc::PGEX::pge = nullptr;
