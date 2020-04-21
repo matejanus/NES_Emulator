@@ -3,7 +3,7 @@
 //
 #include "Cartridge.h"
 
-Cartridge::Cartridge(const std::string& sFileName) {
+Cartridge::Cartridge(const std::string& sFileName):nMapperID(0), nPRGBanks(0), nCHRBanks(0)  {
     // iNES Format Header
     struct sHeader {
         char name[4];
@@ -15,7 +15,7 @@ Cartridge::Cartridge(const std::string& sFileName) {
         uint8_t tv_system1;
         uint8_t tv_system2;
         char unused[5];
-    } header;
+    } header{};
 
     bImageValid = false;
 

@@ -3,7 +3,7 @@
 //
 #include "Bus.h"
 
-Bus::Bus() {
+Bus::Bus():nSystemClockCounter(0) {
     cpu.connectBus(this);
 }
 

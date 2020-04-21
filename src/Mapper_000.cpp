@@ -14,11 +14,8 @@ bool Mapper_000::cpuMapRead(uint16_t addr, uint32_t& mappedAddress) {
     return false;
 }
 bool Mapper_000::cpuMapWrite(uint16_t addr, uint32_t& mappedAddress) {
-    //    if(addr <= 0xFFFF) { //always true
     mappedAddress = addr & (nPRGBanks > 1 ? 0x7FFF : 0x3FFF);
     return true;
-    //    }
-    //    return false;
 }
 bool Mapper_000::ppuMapRead(uint16_t addr, uint32_t& mappedAddress) {
     if(addr <= 0x1FFF) {

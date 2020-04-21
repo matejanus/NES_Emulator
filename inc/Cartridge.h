@@ -36,9 +36,9 @@ private:
     std::vector<uint8_t> vPRGMemory;
     std::vector<uint8_t> vCHRMemory;
 
-    uint8_t nMapperID = 0;
-    uint8_t nPRGBanks = 0;
-    uint8_t nCHRBanks = 0;
+    uint8_t nMapperID;
+    uint8_t nPRGBanks;
+    uint8_t nCHRBanks;
 
     std::shared_ptr<Mapper> pMapper;
 };

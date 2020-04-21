@@ -19,8 +19,7 @@ public:
 
     cpu6502 cpu;
     Ppu ppu;
-//    std::array<uint8_t , 2048> cpuRam{};
-    uint8_t cpuRam[2048];
+    std::array<uint8_t , 2048> cpuRam{};
 
     std::shared_ptr<Cartridge> cart;
 
@@ -32,6 +31,6 @@ public:
     void clock(); //system clock tick
 
 private:
-    uint32_t nSystemClockCounter = 0;
+    uint32_t nSystemClockCounter;
 };
 

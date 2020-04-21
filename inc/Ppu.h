@@ -15,8 +15,8 @@ public:
     Ppu();
     ~Ppu();
 
-    static uint8_t cpuRead(uint16_t addr, bool rdonly = false);
-    static void cpuWrite(uint16_t addr, uint8_t data);
+    uint8_t cpuRead(uint16_t addr, bool rdonly = false);
+    void cpuWrite(uint16_t addr, uint8_t data);
     uint8_t ppuRead(uint16_t addr, bool rdonly = false);
     void ppuWrite(uint16_t addr, uint8_t data);
 
@@ -25,9 +25,9 @@ public:
 private:
     std::shared_ptr<Cartridge> cart;
 
-    uint8_t name[2][1024]; //name tables in VRAM = 2 * 1KB
-    uint8_t palette[32]; //RAM for pallets
-    uint8_t pattern[2][4096]; //TODO:for later
+    std::array<std::array<uint8_t, 2>, 1024> name; //name tables in VRAM = 2 * 1KB
+    std::array<uint8_t, 32> palette; //RAM for pallets
+    std::array<std::array<uint8_t, 2>, 4096>pattern;
 
     //for display
     olc::Pixel palScreen[0x40];
