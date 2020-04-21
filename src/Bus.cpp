@@ -3,12 +3,8 @@
 //
 #include "Bus.h"
 
-Bus::Bus():nSystemClockCounter(0) {
+Bus::Bus() {
     cpu.connectBus(this);
-}
-
-Bus::~Bus() {
-
 }
 
 void Bus::cpuWrite(uint16_t addr, uint8_t data) {
@@ -41,6 +37,17 @@ void Bus::reset() {
     nSystemClockCounter = 0;
 }
 void Bus::clock() {
+    ppu.clock();
+
+    // The CPU runs 3 times slower than the PPU so we only call its
+    // clock() function every 3 times this function is called. We
+    // have a global counter to keep track of this.
+    if (nSystemClockCounter % 3 == 0)
+    {
+        cpu.clock();
+    }
+
+    nSystemClockCounter++;
 }
 void Bus::insertCartridge(const std::shared_ptr<Cartridge> &cartridge) {
     this->cart = cartridge;

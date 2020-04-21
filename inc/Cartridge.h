@@ -4,6 +4,7 @@
 #pragma once
 #include <cstdint>
 #include <string>
+#include <fstream>
 #include <vector>
 #include <memory>
 
@@ -14,6 +15,16 @@ public:
     explicit Cartridge(const std::string &sFileName);
     ~Cartridge() = default;
 
+    bool imageValid();
+
+    enum MIRROR
+    {
+        HORIZONTAL,
+        VERTICAL,
+        ONESCREEN_LO,
+        ONESCREEN_HI,
+    } mirror = HORIZONTAL;
+
     bool cpuRead(uint16_t addr, uint8_t &data);
     bool cpuWrite(uint16_t addr, uint8_t data);
 
@@ -21,8 +32,9 @@ public:
     bool ppuWrite(uint16_t addr, uint8_t data);
 
 private:
-    std::vector<uint8_t> v_PRGMemory;
-    std::vector<uint8_t> v_CHRMemory;
+    bool bImageValid = false;
+    std::vector<uint8_t> vPRGMemory;
+    std::vector<uint8_t> vCHRMemory;
 
     uint8_t nMapperID = 0;
     uint8_t nPRGBanks = 0;

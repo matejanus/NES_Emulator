@@ -6,7 +6,8 @@ SET(CMAKE_C_COMPILER gcc)
 SET(CMAKE_CXX_COMPILER g++)
 
 SET(C_FLAGS "-g -gdwarf-2")
-set(CMAKE_CXX_FLAGS "-Wall -Wpedantic -Wextra -Og -lX11 -lGL -lpthread -lpng -lstdc++fs")
+set(CMAKE_CXX_FLAGS "-Wall -g -Wpedantic -Wextra -Og -lX11 -lGL -lpthread -lpng -lstdc++fs")
+#set(CMAKE_CXX_FLAGS "-lX11 -lGL -lpthread -lpng -lstdc++fs")
 SET(CMAKE_EXE_LINKER_FLAGS "-Wl,-Map=${PROJECT_NAME}.map")
 set(sources
         ${CMAKE_SOURCE_DIR}/main.cpp

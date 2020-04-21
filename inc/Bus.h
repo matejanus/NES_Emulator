@@ -6,7 +6,7 @@
 
 #include <array>
 #include <cstdint>
-#include <memory>
+//#include <memory>
 
 #include "Cartridge.h"
 #include "Ppu.h"
@@ -15,10 +15,12 @@
 class Bus {
 public:
     Bus();
-    ~Bus();
+    ~Bus() = default;
+
     cpu6502 cpu;
     Ppu ppu;
-    std::array<uint8_t , 2048> cpuRam{};
+//    std::array<uint8_t , 2048> cpuRam{};
+    uint8_t cpuRam[2048];
 
     std::shared_ptr<Cartridge> cart;
 
@@ -30,6 +32,6 @@ public:
     void clock(); //system clock tick
 
 private:
-    uint32_t nSystemClockCounter;
+    uint32_t nSystemClockCounter = 0;
 };
 

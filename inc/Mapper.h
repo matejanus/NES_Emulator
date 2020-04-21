@@ -10,7 +10,7 @@
 class Mapper{
 public:
     Mapper(uint8_t prgBanks, uint8_t chrBanks);
-    ~Mapper() = default;
+    virtual ~Mapper() = default;
 
     virtual bool cpuMapRead(uint16_t addr, uint32_t &mappedAddress) = 0;
     virtual bool cpuMapWrite(uint16_t addr, uint32_t &mappedAddress) = 0;
