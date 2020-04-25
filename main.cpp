@@ -75,6 +75,8 @@ public:
     bool bEmulationRun = false;
     float fResidualTime = 0.0;
 
+    uint8_t nSelectedPalette = 0x00;
+
     std::shared_ptr<Cartridge> cart;
     Bus nes;
     std::map<uint16_t, std::string> mapAsm;
@@ -196,8 +198,22 @@ public:
         if(GetKey(olc::Key::SPACE).bPressed)
             bEmulationRun = !bEmulationRun;
 
+        if(GetKey(olc::Key::P).bPressed)
+            (++nSelectedPalette) &= 0x07;
+
         DrawCpu(516, 2);
         DrawCode(516, 72, 26);
+
+        const int nSwatchSize = 6;
+        for(int p = 0; p<8; p++)
+            for(int s= 0; s<4; s++)
+                FillRect(516+p * (nSwatchSize*5) + s*nSwatchSize, 340, nSwatchSize, nSwatchSize, nes.ppu.GetColourFromPaletteRam(p, s));
+
+        DrawRect(516 + nSelectedPalette * (nSwatchSize * 5) - 1, 339, (nSwatchSize * 4), nSwatchSize, olc::WHITE);
+        
+        DrawSprite(516, 348, &nes.ppu.GetPatternTable(0, nSelectedPalette));
+        DrawSprite(648, 348, &nes.ppu.GetPatternTable(1, nSelectedPalette));
+
 
         DrawSprite(0, 0, &nes.ppu.GetScreen(), 2);
         return true;

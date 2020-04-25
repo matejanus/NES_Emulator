@@ -37,7 +37,8 @@ private:
 public:
     olc::Sprite& GetScreen();
     olc::Sprite& GetNameTable(uint8_t i);
-    olc::Sprite& GetPatternTable(uint8_t i);
+    olc::Pixel& GetColourFromPaletteRam(uint8_t palette, uint8_t pixel);
+    olc::Sprite& GetPatternTable(uint8_t i, uint8_t palette);
     bool frame_complete = false;
 private:
     int16_t scanline = 0;
