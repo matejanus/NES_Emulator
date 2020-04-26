@@ -47,6 +47,11 @@ void Bus::clock() {
         cpu.clock();
     }
 
+    if(ppu.nmi)
+    {
+        ppu.nmi = false;
+        cpu.nmi();
+    }
     nSystemClockCounter++;
 }
 void Bus::insertCartridge(const std::shared_ptr<Cartridge> &cartridge) {

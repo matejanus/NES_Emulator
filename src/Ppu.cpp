@@ -3,6 +3,8 @@
 //
 
 #include "Ppu.h"
+
+#include <Ppu.h>
 Ppu::Ppu() {
     palScreen[0x00] = olc::Pixel(84, 84, 84);
     palScreen[0x01] = olc::Pixel(0, 30, 116);
@@ -84,6 +86,9 @@ uint8_t Ppu::cpuRead(uint16_t addr, bool rdonly) {
     case 0x0001:  //Mask
         break;
     case 0x0002:  //Status
+        data = (status.reg & 0xE0) | (ppu_data_buffer & 0x1F);
+        status.vertical_blank = 0;
+        address_latch = 0;
         break;
     case 0x0003:  //OAM address
         break;
@@ -94,6 +99,12 @@ uint8_t Ppu::cpuRead(uint16_t addr, bool rdonly) {
     case 0x0006:  //PPU Address
         break;
     case 0x0007:  //PPU data
+        data = ppu_data_buffer;
+        ppu_data_buffer = ppuRead(ppu_address);
+
+        if(ppu_address > 0x3F00)
+            data = ppu_data_buffer;
+        ppu_address++;
         break;
     default:
         break;
@@ -105,8 +116,10 @@ void Ppu::cpuWrite(uint16_t addr, uint8_t data) {
     (void)data;
     switch(addr) {
     case 0x0000:  //Control
+        control.reg = data;
         break;
     case 0x0001:  //Mask
+        mask.reg = data;
         break;
     case 0x0002:  //Status
         break;
@@ -117,8 +130,18 @@ void Ppu::cpuWrite(uint16_t addr, uint8_t data) {
     case 0x0005:  //Scroll
         break;
     case 0x0006:  //PPU Address
+        if(!address_latch) {
+            ppu_address = (ppu_address & 0x00FF) | data;
+            address_latch = 1;
+        } else {
+            ppu_address = (ppu_address & 0xFF00) | data;
+            address_latch = 0;
+        }
         break;
     case 0x0007:  //PPU data
+        ppuWrite(ppu_address, data);
+        ppu_address++;
+        //        vram_addr.reg += (control.increment_mode ? 32 : 1);
         break;
     default:
         break;
@@ -131,8 +154,31 @@ uint8_t Ppu::ppuRead(uint16_t addr, bool rdonly) {
 
     if(cart->ppuRead(addr, data)) {
     } else if(addr >= 0x0000 && addr <= 0x1FFF) {
-        data = pattern[(addr & 0x1000) >> 12][addr & 0x0FFF];
+        data = tblPattern[(addr & 0x1000) >> 12][addr & 0x0FFF];
     } else if(addr >= 0x2000 && addr <= 0x3EFF) {
+        addr &= 0x0FFF;
+
+        if(cart->mirror == Cartridge::MIRROR::VERTICAL) {
+            // Vertical
+            if(addr >= 0x0000 && addr <= 0x03FF)
+                data = tblName[0][addr & 0x03FF];
+            if(addr >= 0x0400 && addr <= 0x07FF)
+                data = tblName[1][addr & 0x03FF];
+            if(addr >= 0x0800 && addr <= 0x0BFF)
+                data = tblName[0][addr & 0x03FF];
+            if(addr >= 0x0C00 && addr <= 0x0FFF)
+                data = tblName[1][addr & 0x03FF];
+        } else if(cart->mirror == Cartridge::MIRROR::HORIZONTAL) {
+            // Horizontal
+            if(addr >= 0x0000 && addr <= 0x03FF)
+                data = tblName[0][addr & 0x03FF];
+            if(addr >= 0x0400 && addr <= 0x07FF)
+                data = tblName[0][addr & 0x03FF];
+            if(addr >= 0x0800 && addr <= 0x0BFF)
+                data = tblName[1][addr & 0x03FF];
+            if(addr >= 0x0C00 && addr <= 0x0FFF)
+                data = tblName[1][addr & 0x03FF];
+        }
     } else if(addr >= 0x3F00 && addr <= 0x3FFF) {
         addr &= 0x001F;
         if(addr == 0x0010)
@@ -143,7 +189,7 @@ uint8_t Ppu::ppuRead(uint16_t addr, bool rdonly) {
             addr = 0x0008;
         if(addr == 0x001C)
             addr = 0x000C;
-        data = palette[addr];
+        data = tblPalette[addr] & (mask.grayscale ? 0x30 : 0x3F);
     }
 
     return data;  //mock
@@ -154,9 +200,31 @@ void Ppu::ppuWrite(uint16_t addr, uint8_t data) {
 
     if(cart->ppuWrite(addr, data)) {
     } else if(addr >= 0x0000 && addr <= 0x1FFF) {
-        pattern[(addr & 0x1000) >> 12][addr & 0x0FFF] = data;
+        tblPattern[(addr & 0x1000) >> 12][addr & 0x0FFF] = data;
 
     } else if(addr >= 0x2000 && addr <= 0x3EFF) {
+        addr &= 0x0FFF;
+        if(cart->mirror == Cartridge::MIRROR::VERTICAL) {
+            // Vertical
+            if(addr >= 0x0000 && addr <= 0x03FF)
+                tblName[0][addr & 0x03FF] = data;
+            if(addr >= 0x0400 && addr <= 0x07FF)
+                tblName[1][addr & 0x03FF] = data;
+            if(addr >= 0x0800 && addr <= 0x0BFF)
+                tblName[0][addr & 0x03FF] = data;
+            if(addr >= 0x0C00 && addr <= 0x0FFF)
+                tblName[1][addr & 0x03FF] = data;
+        } else if(cart->mirror == Cartridge::MIRROR::HORIZONTAL) {
+            // Horizontal
+            if(addr >= 0x0000 && addr <= 0x03FF)
+                tblName[0][addr & 0x03FF] = data;
+            if(addr >= 0x0400 && addr <= 0x07FF)
+                tblName[0][addr & 0x03FF] = data;
+            if(addr >= 0x0800 && addr <= 0x0BFF)
+                tblName[1][addr & 0x03FF] = data;
+            if(addr >= 0x0C00 && addr <= 0x0FFF)
+                tblName[1][addr & 0x03FF] = data;
+        }
     } else if(addr >= 0x3F00 && addr <= 0x3FFF) {
         addr &= 0x001F;
         if(addr == 0x0010)
@@ -167,13 +235,23 @@ void Ppu::ppuWrite(uint16_t addr, uint8_t data) {
             addr = 0x0008;
         if(addr == 0x001C)
             addr = 0x000C;
-        palette[addr] = data;
+        tblPalette[addr] = data;
     }
 }
 void Ppu::connectCartridge(const std::shared_ptr<Cartridge>& cartridge) {
     this->cart = cartridge;
 }
 void Ppu::clock() {
+    if(scanline == -1 & cycle == 1) {
+        status.vertical_blank = 0;
+    }
+
+    if(scanline == 241 & cycle == 1) {
+        status.vertical_blank = 1;
+
+        if(control.enable_nmi)
+            nmi = true;
+    }
     sprScreen.SetPixel(cycle - 1, scanline, palScreen[(rand() % 2) ? 0x3F : 0x30]);
 
     cycle++;
@@ -195,22 +273,20 @@ olc::Sprite& Ppu::GetNameTable(uint8_t i) {
 olc::Pixel& Ppu::GetColourFromPaletteRam(uint8_t p, uint8_t pixel) {
     return palScreen[ppuRead(0x3F00 + (p << 2) + pixel)];
 }
-olc::Sprite& Ppu::GetPatternTable(uint8_t i, uint8_t p) {
-    for(int nTileY = 0; nTileY < 16; nTileY++) {
-        for(int nTileX = 0; nTileX < 16; nTileX++) {
+olc::Sprite& Ppu::GetPatternTable(uint8_t i, uint8_t palette) {
+    for(uint16_t nTileY = 0; nTileY < 16; nTileY++) {
+        for(uint16_t nTileX = 0; nTileX < 16; nTileX++) {
             uint16_t nOffset = nTileY * 256 + nTileX * 16;
-
-            for(int row = 0; row < 8; row++) {
-                uint8_t tile_lsb = ppuRead(i * 0x1000 + nOffset + row);
-                uint8_t tile_msb = ppuRead(i * 0x1000 + nOffset + row + 8);
-
-                for(int col = 0; col < 16; col++) {
-                    uint8_t pixel = tile_lsb & 0x01 + tile_msb & 0x01;
+            for(uint16_t row = 0; row < 8; row++) {
+                uint8_t tile_lsb = ppuRead(i * 0x1000 + nOffset + row + 0x0000);
+                uint8_t tile_msb = ppuRead(i * 0x1000 + nOffset + row + 0x0008);
+                for(uint16_t col = 0; col < 8; col++) {
+                    uint8_t pixel = (tile_lsb & 0x01) + (tile_msb & 0x01);
                     tile_lsb >>= 1;
                     tile_msb >>= 1;
-
-                    sprPatternTable[i].SetPixel(nTileX * 8 + (7 - col), nTileY * 8 + row,
-                                                GetColourFromPaletteRam(p, pixel));
+                    sprPatternTable[i].SetPixel(
+                        nTileX * 8 + (7 - col),  // Because we are using the lsb of the row word first
+                        nTileY * 8 + row, GetColourFromPaletteRam(palette, pixel));
                 }
             }
         }

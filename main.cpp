@@ -145,7 +145,7 @@ public:
     }
 
     bool OnUserCreate() override {
-        cart = std::make_shared<Cartridge>("nestest.nes");
+        cart = std::make_shared<Cartridge>("smb.nes");
 
         nes.insertCartridge(cart);
 
@@ -210,7 +210,7 @@ public:
                 FillRect(516+p * (nSwatchSize*5) + s*nSwatchSize, 340, nSwatchSize, nSwatchSize, nes.ppu.GetColourFromPaletteRam(p, s));
 
         DrawRect(516 + nSelectedPalette * (nSwatchSize * 5) - 1, 339, (nSwatchSize * 4), nSwatchSize, olc::WHITE);
-        
+
         DrawSprite(516, 348, &nes.ppu.GetPatternTable(0, nSelectedPalette));
         DrawSprite(648, 348, &nes.ppu.GetPatternTable(1, nSelectedPalette));
 
