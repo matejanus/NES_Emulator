@@ -15,13 +15,18 @@
 class Bus {
 public:
     Bus();
-    ~Bus() = default;
+    ~Bus();
 
     cpu6502 cpu;
     Ppu ppu;
-    std::array<uint8_t , 2048> cpuRam{};
 
     std::shared_ptr<Cartridge> cart;
+
+//    std::array<uint8_t , 2048> cpuRam{};
+    uint8_t cpuRam[2048];
+
+    uint8_t controller[2];
+public: // Main Bus Read & Write
 
     void cpuWrite(uint16_t addr, uint8_t data);
     uint8_t cpuRead(uint16_t addr, bool bReadOnly = false);
@@ -32,5 +37,6 @@ public:
 
 private:
     uint32_t nSystemClockCounter;
+    uint8_t controller_state[2]{};
 };
 

@@ -22,6 +22,7 @@ public:
 
     void connectCartridge(const std::shared_ptr<Cartridge>& cartridge);
     void clock();
+    void reset();
 
 private:
     std::shared_ptr<Cartridge> cart;
@@ -29,22 +30,23 @@ private:
 //    std::array<std::array<uint8_t, 2>, 1024> name;  //name tables in VRAM = 2 * 1KB
 //    std::array<uint8_t, 32> palette;                //RAM for pallets
 //    std::array<std::array<uint8_t, 2>, 4096> pattern;
-
+private:
     uint8_t     tblName[2][1024];
     uint8_t     tblPattern[2][4096];
     uint8_t		tblPalette[32];
 
-    //for display
-    olc::Pixel palScreen[0x40];
-    olc::Sprite sprScreen = olc::Sprite(256, 240);
-    olc::Sprite sprNameTable[2] = {olc::Sprite(256, 240), olc::Sprite(256, 240)};
-    olc::Sprite sprPatternTable[2] = {olc::Sprite(128, 128), olc::Sprite(128, 128)};
+
+private:
+    olc::Pixel  palScreen[0x40];
+    olc::Sprite sprScreen          =   olc::Sprite(256, 240);
+    olc::Sprite sprNameTable[2]    = { olc::Sprite(256, 240), olc::Sprite(256, 240) };
+    olc::Sprite sprPatternTable[2] = { olc::Sprite(128, 128), olc::Sprite(128, 128) };
 
 public:
     olc::Sprite& GetScreen();
     olc::Sprite& GetNameTable(uint8_t i);
-    olc::Pixel& GetColourFromPaletteRam(uint8_t palette, uint8_t pixel);
     olc::Sprite& GetPatternTable(uint8_t i, uint8_t palette);
+    olc::Pixel& GetColourFromPaletteRam(uint8_t palette, uint8_t pixel);
     bool frame_complete = false;
     bool nmi = false;
 
@@ -95,7 +97,39 @@ private:
         uint8_t reg;
     } control;
 
+    union loopy_register
+    {
+        // Credit to Loopy for working this out :D
+        struct
+        {
+
+            uint16_t coarse_x : 5;
+            uint16_t coarse_y : 5;
+            uint16_t nametable_x : 1;
+            uint16_t nametable_y : 1;
+            uint16_t fine_y : 3;
+            uint16_t unused : 1;
+        };
+
+        uint16_t reg = 0x0000;
+    };
+
+    uint8_t fine_x = 0x00;
+
+    loopy_register vram_addr; // Active "pointer" address into nametable to extract background tile info
+    loopy_register tram_addr; // Temporary store of information to be "transferred" into "pointer" at various times
+
     uint8_t address_latch = 0x00; //TODO: boolean
     uint8_t ppu_data_buffer = 0x00;
-    uint16_t ppu_address = 0x0000;
+//    uint16_t ppu_address = 0x0000;
+
+    // Background rendering
+    uint8_t bg_next_tile_id     = 0x00;
+    uint8_t bg_next_tile_attrib = 0x00;
+    uint8_t bg_next_tile_lsb    = 0x00;
+    uint8_t bg_next_tile_msb    = 0x00;
+    uint16_t bg_shifter_pattern_lo = 0x0000;
+    uint16_t bg_shifter_pattern_hi = 0x0000;
+    uint16_t bg_shifter_attrib_lo  = 0x0000;
+    uint16_t bg_shifter_attrib_hi  = 0x0000;
 };
