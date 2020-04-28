@@ -123,7 +123,7 @@ private:
         DrawString(x , y + 20, "A: $" +  hex(nes.cpu.a, 2) + "  [" + std::to_string(nes.cpu.a) + "]");
         DrawString(x , y + 30, "X: $" +  hex(nes.cpu.x, 2) + "  [" + std::to_string(nes.cpu.x) + "]");
         DrawString(x , y + 40, "Y: $" +  hex(nes.cpu.y, 2) + "  [" + std::to_string(nes.cpu.y) + "]");
-        DrawString(x , y + 50, "Stack P: $" + hex(nes.cpu.stkp, 4));
+        DrawString(x , y + 50, "Stack P: $" + hex(nes.cpu.sp, 4));
     }
 
     void DrawCode(int x, int y, int nLines)
