@@ -154,7 +154,7 @@ uint8_t Ppu::cpuRead(uint16_t addr, bool rdonly) {
             data = (status.reg & 0xE0) | (ppu_data_buffer & 0x1F);
             status.vertical_blank = 0;
 
-            address_latch = 0;
+            address_latch = false;
             break;
 
             // OAM Address
@@ -207,24 +207,24 @@ void Ppu::cpuWrite(uint16_t addr, uint8_t data) {
         pOAM[oam_addr] = data;
         break;
     case 0x0005:  // Scroll
-        if(address_latch == 0) {
+        if(!address_latch) {
             fine_x = data & 0x07;
             tram_addr.coarse_x = data >> 3;
-            address_latch = 1;
+            address_latch = true;
         } else {
             tram_addr.fine_y = data & 0x07;
             tram_addr.coarse_y = data >> 3;
-            address_latch = 0;
+            address_latch = false;
         }
         break;
     case 0x0006:  // PPU Address
-        if(address_latch == 0) {
+        if(!address_latch) {
             tram_addr.reg = (uint16_t)((data & 0x3F) << 8) | (tram_addr.reg & 0x00FF);
-            address_latch = 1;
+            address_latch = true;
         } else {
             tram_addr.reg = (tram_addr.reg & 0xFF00) | data;
             vram_addr = tram_addr;
-            address_latch = 0;
+            address_latch = false;
         }
         break;
     case 0x0007:  // PPU Data
@@ -333,7 +333,7 @@ void Ppu::connectCartridge(const std::shared_ptr<Cartridge>& cartridge) {
 
 void Ppu::reset() {
     fine_x = 0x00;
-    address_latch = 0x00;
+    address_latch = false;
     ppu_data_buffer = 0x00;
     scanline = 0;
     cycle = 0;
@@ -433,10 +433,8 @@ void Ppu::clock() {
             status.sprite_zero_hit = 0;
             status.sprite_overflow = 0;
 
-            for(int i = 0; i < 8; i++) {
-                sprite_shifter_pattern_lo[i] = 0;  //TODO:memset
-                sprite_shifter_pattern_hi[i] = 0;
-            }
+            std::memset(&sprite_shifter_pattern_lo, 0, sizeof(sprite_shifter_pattern_lo));
+            std::memset(&sprite_shifter_pattern_hi, 0, sizeof(sprite_shifter_pattern_lo));
         }
 
         if((cycle >= 2 && cycle < 258) || (cycle >= 321 && cycle < 338)) {
@@ -499,12 +497,11 @@ void Ppu::clock() {
         bSpriteZeroHitPossible = false;
 
         while(nOAMEntry < 64 && sprite_count < 9) {
-            int16_t diff = ((int16_t)scanline - (int16_t)OAM[nOAMEntry].y);  //TODO: static cast
+            int16_t diff = (static_cast<int16_t>(scanline) - static_cast<int16_t>(OAM[nOAMEntry].y));
 
             if(diff >= 0 && diff < (control.sprite_size ? 16 : 8)) {
                 if(sprite_count < 8) {
-                    if(nOAMEntry ==0)
-                    {
+                    if(nOAMEntry == 0) {
                         bSpriteZeroHitPossible = true;
                     }
                     memcpy(&spriteScanline[sprite_count], &OAM[nOAMEntry], sizeof(sObjectAttributeEntry));
@@ -518,8 +515,8 @@ void Ppu::clock() {
 
     if(cycle == 340) {
         for(uint8_t i = 0; i < sprite_count; i++) {
-            uint8_t sprite_pattern_bits_lo, sprite_pattern_bits_hi;
-            uint16_t sprite_pattern_addr_lo, sprite_pattern_addr_hi;
+            uint8_t sprite_pattern_bits_lo = {0}, sprite_pattern_bits_hi = {0};
+            uint16_t sprite_pattern_addr_lo = {0}, sprite_pattern_addr_hi = {0};
 
             if(!control.sprite_size) {
                 // 8x8 Sprite Mode - The control register determines the pattern table
@@ -563,13 +560,13 @@ void Ppu::clock() {
                             ((spriteScanline[i].id & 0x01) << 12)  // Which Pattern Table? 0KB or 4KB offset
                             |
                             (((spriteScanline[i].id & 0xFE) + 1) << 4)  // Which Cell? Tile ID * 16 (16 bytes per tile)
-                            | (7 - (scanline - spriteScanline[i].y) & 0x07);  // Which Row in cell? (0->7)
+                            | ((7 - (scanline - spriteScanline[i].y)) & 0x07);  // Which Row in cell? (0->7)
                     } else {
                         // Reading Bottom Half Tile
                         sprite_pattern_addr_lo =
                             ((spriteScanline[i].id & 0x01) << 12)   // Which Pattern Table? 0KB or 4KB offset
                             | ((spriteScanline[i].id & 0xFE) << 4)  // Which Cell? Tile ID * 16 (16 bytes per tile)
-                            | (7 - (scanline - spriteScanline[i].y) & 0x07);  // Which Row in cell? (0->7)
+                            | ((7 - (scanline - spriteScanline[i].y)) & 0x07);  // Which Row in cell? (0->7)
                     }
                 }
             }
@@ -691,13 +688,8 @@ void Ppu::clock() {
 
         // Sprite Zero Hit detection
         if(bSpriteZeroHitPossible && bSpriteZeroBeingRendered) {
-            // Sprite zero is a collision between foreground and background
-            // so they must both be enabled
             if(mask.render_background & mask.render_sprites) {
-                // The left edge of the screen has specific switches to control
-                // its appearance. This is used to smooth inconsistencies when
-                // scrolling (since sprites x coord must be >= 0)
-                if(~(mask.render_background_left | mask.render_sprites_left)) {
+                if((mask.render_background_left | mask.render_sprites_left)) {
                     if(cycle >= 9 && cycle < 258) {
                         status.sprite_zero_hit = 1;
                     }

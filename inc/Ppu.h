@@ -103,7 +103,7 @@ private:
     loopy_register vram_addr;  // Active "pointer" address into nametable to extract background tile info
     loopy_register tram_addr;  // Temporary store of information to be "transferred" into "pointer" at various times
 
-    uint8_t address_latch = 0x00;  //TODO: boolean
+    bool address_latch = false;
     uint8_t ppu_data_buffer = 0x00;
 
     // Background rendering
@@ -116,18 +116,18 @@ private:
     uint16_t bg_shifter_attrib_lo = 0x0000;
     uint16_t bg_shifter_attrib_hi = 0x0000;
 
-    struct sObjectAttributeEntry{ //TODO:std::array
+    struct sObjectAttributeEntry{
         uint8_t y;
         uint8_t id;
         uint8_t attribute;
         uint8_t x;
-    }OAM[64];
+    }OAM[64]{};
 
-    sObjectAttributeEntry spriteScanline[8]; //TODO:std::array
+    sObjectAttributeEntry spriteScanline[8]{};
     uint8_t sprite_count = 0x00;
 
-    uint8_t sprite_shifter_pattern_lo[8];
-    uint8_t sprite_shifter_pattern_hi[8];
+    std::array<uint8_t, 8> sprite_shifter_pattern_lo{};
+    std::array<uint8_t, 8> sprite_shifter_pattern_hi{};
 
     bool bSpriteZeroHitPossible = false;
     bool bSpriteZeroBeingRendered = false;

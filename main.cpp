@@ -20,8 +20,6 @@ private:
     float fResidualTime = 0.0f;
 
     uint8_t nSelectedPalette = 0x00;
-
-private:
     // Support Utilities
     std::map<uint16_t, std::string> mapAsm;
 
@@ -103,7 +101,7 @@ private:
     bool OnUserCreate()
     {
         // Load the cartridge
-        cart = std::make_shared<Cartridge>("kungfu.nes");
+        cart = std::make_shared<Cartridge>("smb.nes");
 
         if (!cart->imageValid())
             return false;
