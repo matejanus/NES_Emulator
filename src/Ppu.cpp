@@ -85,7 +85,7 @@ olc::Sprite& Ppu::GetPatternTable(uint8_t i, uint8_t palette) {
                 uint8_t tile_msb = ppuRead(i * 0x1000 + nOffset + row + 0x0008);
 
                 for(uint16_t col = 0; col < 8; col++) {
-                    uint8_t pixel = (tile_lsb & 0x01) + (tile_msb & 0x01);
+                    uint8_t pixel = (tile_lsb & 0x01) << 1 | (tile_msb & 0x01);
                     tile_lsb >>= 1;
                     tile_msb >>= 1;
                     sprPatternTable[i].SetPixel(
@@ -161,6 +161,7 @@ uint8_t Ppu::cpuRead(uint16_t addr, bool rdonly) {
 
             // OAM Data
         case 0x0004:
+            data = pOAM[oam_addr];
             break;
 
             // Scroll - Not Readable
@@ -197,11 +198,11 @@ void Ppu::cpuWrite(uint16_t addr, uint8_t data) {
     case 0x0001:  // Mask
         mask.reg = data;
         break;
-    case 0x0002:  // Status
-        break;
     case 0x0003:  // OAM Address
+        oam_addr = data;
         break;
     case 0x0004:  // OAM Data
+        pOAM[oam_addr] = data;
         break;
     case 0x0005:  // Scroll
         if(address_latch == 0) {
