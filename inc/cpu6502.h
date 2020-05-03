@@ -18,7 +18,6 @@ public:
     cpu6502();
     ~cpu6502() = default;
 
-public:
     uint8_t a = 0x00;       // Accumulator Register
     uint8_t x = 0x00;       // X Register
     uint8_t y = 0x00;       // Y Register
@@ -77,7 +76,6 @@ private:
 
     std::vector<INSTRUCTION> lookup;
 
-private:
     uint8_t IMP();
     uint8_t IMM();
     uint8_t ZP0();
@@ -90,8 +88,6 @@ private:
     uint8_t IND();
     uint8_t IZX();
     uint8_t IZY();
-
-private:
     uint8_t ADC();
     uint8_t AND();
     uint8_t ASL();

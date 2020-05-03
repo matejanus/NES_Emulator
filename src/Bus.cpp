@@ -12,6 +12,10 @@ void Bus::cpuWrite(uint16_t addr, uint8_t data) {
         cpuRam[addr & 0x07FF] = data;
     } else if(addr >= 0x2000 && addr <= 0x3FFF) {
         ppu.cpuWrite(addr & 0x0007, data);
+    } else if(addr == 0x4014) {
+        dma_page = data;
+        dma_addr = 0x00;
+        dma_transfer = true;
     } else if(addr >= 0x4016 && addr <= 0x4017) {
         controller_state[addr & 0x0001] = controller[addr & 0x0001];
     }
@@ -40,13 +44,38 @@ void Bus::reset() {
     cpu.reset();
     ppu.reset();
     nSystemClockCounter = 0;
+    dma_page = 0x00;
+    dma_addr = 0x00;
+    dma_data = 0x00;
+    dma_dummy = true;
+    dma_transfer = false;
 }
 
 void Bus::clock() {
     ppu.clock();
 
     if(nSystemClockCounter % 3 == 0) {
-        cpu.clock();
+        if(dma_transfer) {
+            if(dma_dummy) {
+                if(nSystemClockCounter % 2 == 1) {  //wait to synchronize
+                    dma_dummy = false;
+                }
+
+            } else {
+                if(nSystemClockCounter % 2 == 0) {  //even clock read
+                    dma_data = cpuRead(dma_page << 8 | dma_addr);
+                } else {  //odd write
+                    ppu.pOAM[dma_addr] = dma_data;
+                    dma_addr++;
+
+                    if(dma_addr == 0x00) {  //dma finished
+                        dma_transfer = false;
+                        dma_dummy = true;
+                    }
+                }
+            }
+        } else
+            cpu.clock();
     }
 
     if(ppu.nmi) {

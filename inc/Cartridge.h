@@ -14,7 +14,7 @@ public:
     explicit Cartridge(const std::string &sFileName);
     ~Cartridge() = default;
 
-    bool imageValid();
+    [[nodiscard]] bool imageValid() const;
     bool cpuRead(uint16_t addr, uint8_t &data);
     bool cpuWrite(uint16_t addr, uint8_t data);
     // Communication with PPU Bus

@@ -21,7 +21,7 @@ public:
     std::array<uint8_t, 2048> cpuRam{};
     std::array<uint8_t, 2> controller{};
 
-public:  // Main Bus Read & Write
+// Main Bus Read & Write
     void cpuWrite(uint16_t addr, uint8_t data);
     uint8_t cpuRead(uint16_t addr, bool bReadOnly = false);
     void insertCartridge(const std::shared_ptr<Cartridge> &cartridge);
@@ -31,4 +31,13 @@ public:  // Main Bus Read & Write
 private:
     uint32_t nSystemClockCounter;
     std::array<uint8_t, 2> controller_state{};
+
+    uint8_t dma_page = 0x00;
+    uint8_t dma_addr = 0x00;
+    uint8_t dma_data = 0x00;
+
+    bool dma_transfer = false;
+    bool dma_dummy = true;
+
+
 };
