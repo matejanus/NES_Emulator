@@ -122,8 +122,18 @@ private:
         uint8_t attribute;
         uint8_t x;
     }OAM[64];
+
+    sObjectAttributeEntry spriteScanline[8]; //TODO:std::array
+    uint8_t sprite_count = 0x00;
+
+    uint8_t sprite_shifter_pattern_lo[8];
+    uint8_t sprite_shifter_pattern_hi[8];
+
+    bool bSpriteZeroHitPossible = false;
+    bool bSpriteZeroBeingRendered = false;
+
+
 public:
     uint8_t* pOAM = (uint8_t*)OAM; //TODO:unique ptr
-
     uint8_t oam_addr = 0x00;
 };
